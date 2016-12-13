@@ -73,7 +73,7 @@ grep_notes() {
 new_note() {
     local note_name="$*"
     mkdir -p "$(dirname "$notes_dir/$note_name")"
-    open_note "$note_name$file_ext"
+	open_note "$note_name"
 }
 
 remove_note() {
@@ -107,8 +107,12 @@ open_something() {
 
 open_note() {
     local note_path=$1
+	local ext_check=true
 
-    if [[ "$note_path" != *$file_extd ]]; then
+	if echo $note_path | grep -q '\.[a-z]'; then
+		ext_check=false
+	fi
+	if [[ "$note_path" != *$file_ext ]] && $ext_check ; then
         note_path="$note_path$file_ext"
     fi
     if [ ! -f "$note_path" ]; then
