@@ -84,7 +84,7 @@ find_notes() {
 
 grep_notes() {
     if [ ! "$#" -gt 0 ]; then
-        printf "Grep requires a pattern, but none was provided."
+        echo "Grep requires a pattern, but none was provided."
         return 1
     fi
 
@@ -155,8 +155,9 @@ handle_multiple_notes() {
     if [[ -p /dev/stdin ]]; then
         read -d'\n' note_names
         while read note_name; do
-            ${cmd}_note "$note_name"
+			buffer+="${note_name},"
         done <<< "$note_names"
+		${cmd}_note "${buffer::-1}"
     else
         ${cmd}_note "${@:2}"
     fi
@@ -179,7 +180,8 @@ open_note() {
     local note_path=$1
 
     if [[ -z "$note_path" ]]; then
-        open "$notes_dir"
+		OPEN_CMD=$([ $OSTYPE == "darwin"* ] && echo "open" || echo "xdg-open")
+        $OPEN_CMD "$notes_dir"
         return
     fi
 
@@ -188,9 +190,14 @@ open_note() {
         exit 1
     fi
 
-    note_path=$( get_full_note_path "$note_path" )
+	local files=()
+	OLDIFS=$IFS; IFS=','
+	for file in ${note_path[@]} ; do
+		files+=( $( get_full_note_path "$file" ) )
+	done
 
-    $EDITOR "$note_path" < /dev/tty
+    $EDITOR ${files[@]} < /dev/tty
+	IFS=$OLDIFS
 }
 
 cat_note() {
@@ -201,9 +208,13 @@ cat_note() {
         exit 1
     fi
 
-    note_path=$( get_full_note_path "$note_path" )
+	local files=()
+	OLDIFS=$IFS; IFS=','
+	for file in ${note_path[@]} ; do
+		cat $( get_full_note_path "$file" ) || exit 1
+	done
+	IFS=$OLDIFS
 
-    cat "$note_path"
 }
 
 usage() {

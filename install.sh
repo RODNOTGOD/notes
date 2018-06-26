@@ -7,9 +7,9 @@ echo "Checking for root..."
     [ "$(whoami)" != "root" ] && exec sudo -- "$0" -s -- "$@"
 
 # This has to be defined after root elevation or script will fail.
-function assertInstalled() {
+assertInstalled() {
     for var in "$@"; do
-        if ! which $var &> /dev/null; then
+		if !( command -v $var 1> /dev/null ); then
             echo "$var is required but not installed, exiting."
             exit 1
         fi
