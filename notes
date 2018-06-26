@@ -88,7 +88,22 @@ grep_notes() {
         return 1
     fi
 
-    local grep_output=$(grep -r "$notes_dir" -li -e "$*" 2>&1)
+    # local grep_output=$(grep -r "$notes_dir" -li -e "$*" 2>&1)
+    local grep_output
+    if [[ -t 1 ]]; then
+        matches=$(grep --color=$GREP_COLOR -r $NOTES_DIRECTORY -in -e "$*" 2>&1)
+        OLDIFS=$IFS
+        IFS=$'\n'
+        for result in $matches; do
+            len=${#result}
+            result=$(echo $result|cut -d'/' -f2-)
+            grep_output+="$(echo /${result})\n"
+        done
+        IFS=$OLDIFS
+    else
+        grep_output=$(grep -r "$notes_dir" -li -e "$*" 2>&1)
+    fi
+
     local grep_result=$?
     local formatted_output=$(printf "$grep_output" | without_notes_dir)
 
@@ -105,8 +120,7 @@ generate_name() {
     local format_string="`date +$QUICKNOTE_FORMAT`"
     # Initial test has no append
     local resolved_name=$format_string
-    while [[ -e "$notes_dir/$resolved_name.$NOTES_EXT" ]]
-    do
+    while [[ -e "$notes_dir/$resolved_name.$NOTES_EXT" ]]; do
         append_num=$[$append_num+1]
         resolved_name=$format_string.$append_num
     done
@@ -125,6 +139,8 @@ new_note() {
 
 remove_note() {
     local rm_args=()
+    local len=${#@}
+
     if [[ "$1" == "-r" || "$1" == "--recursive" ]]; then
         # checks for macos, as it doesn't support long arguments for rm
         if [[ "$OSTYPE" == "darwin"* ]]; then
