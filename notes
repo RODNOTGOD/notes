@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # Default Date string before config
+GREP_COLOR="always"
 QUICKNOTE_FORMAT="quicknote-%Y-%m-%d"
 NOTES_EXT="md"
 # Look for configuration file at ~/.config/notes/config and use it
@@ -92,8 +93,7 @@ grep_notes() {
     local grep_output
     if [[ -t 1 ]]; then
         matches=$(grep --color=$GREP_COLOR -r $NOTES_DIRECTORY -in -e "$*" 2>&1)
-        OLDIFS=$IFS
-        IFS=$'\n'
+        OLDIFS=$IFS; IFS=$'\n'
         for result in $matches; do
             len=${#result}
             result=$(echo $result|cut -d'/' -f2-)
